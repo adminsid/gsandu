@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { Home, Users, Briefcase, Search, Menu, X, ChevronRight, BookOpen, Building2, Stethoscope, Scale, HardHat, Banknote, MapPin, Sparkles, Share2, Phone, Mail, Bookmark, UserCircle, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -143,31 +143,7 @@ const Footer = () => {
 // --- Pages --- //
 
 const HomePage = () => {
-  const [news, setNews] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        // Fallback dummy news if API fails
-        const dummyNews = [
-           { id: 1, title: 'Smart Directory Launched', content: 'We are thrilled to launch the new NYC smart directory for GS&U.', author: 'Admin', published_at: new Date().toISOString() }
-        ];
-        const res = await fetch('https://my-app.lama-4db.workers.dev/api/news');
-        if (res.ok) {
-          const data = await res.json();
-          setNews(data.docs?.length > 0 ? data.docs : dummyNews);
-        } else {
-          setNews(dummyNews);
-        }
-      } catch (err) {
-        // use dummy on fail
-        setNews([{ id: 1, title: 'Smart Directory Launched', content: 'We are thrilled to launch the new NYC smart directory for GS&U.', author: 'Admin', published_at: new Date().toISOString() }]);
-      }
-      setLoading(false);
-    };
-    fetchNews();
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   return (
     <div className="page homepage">
@@ -179,7 +155,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            Your NYC <span className="highlight">Resource Hub</span>
+            Build Your <span className="highlight">GS & U Network</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -187,7 +163,7 @@ const HomePage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="hero-subtitle"
           >
-            We connect you to the local businesses, opportunities, and essential government resources you need. Rooted in the philosophy of gaas, baas, kapaas (food, shelter, clothing).
+            Building a network, establishing relationships, and referring trusted connections. Join the community to save and curate your personal professional directory.
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -198,52 +174,20 @@ const HomePage = () => {
             <Link to="/directory" className="btn-primary large">
               Explore The Network <ChevronRight size={20} />
             </Link>
-            <a href="#resources" className="btn-secondary large">Essential Resources</a>
           </motion.div>
         </div>
         <div className="hero-visual">
-          {/* Abstract representation of networking/connections */}
           <div className="glow-orb primary-orb"></div>
           <div className="glow-orb secondary-orb"></div>
           <div className="glass-card main-card">
-            <Building2 size={48} className="card-icon" />
-            <h3>Building Companies</h3>
-            <p>From employment to Prime America Real Estate.</p>
+            <Users size={48} className="card-icon" />
+            <h3>Your Personal Rolodex</h3>
+            <p>Save and maintain trusted relationships.</p>
           </div>
           <div className="glass-card float-card-1">
-            <Users size={32} className="card-icon" />
-            <p>Community First</p>
+            <Bookmark size={32} className="card-icon" />
+            <p>Save Contacts</p>
           </div>
-        </div>
-      </section>
-
-      {/* Community News Section */}
-      <section className="news-section">
-        <div className="section-header">
-          <h2>Community Updates</h2>
-          <p>The latest news and resources for the NYC community.</p>
-        </div>
-        <div className="news-grid">
-          {loading ? (
-             <div className="loading">Loading updates...</div>
-          ) : news.length > 0 ? (
-             news.map(item => (
-               <motion.div 
-                 initial={{ opacity: 0, y: 10 }}
-                 whileInView={{ opacity: 1, y: 0 }}
-                 viewport={{ once: true }}
-                 key={item.id} 
-                 className="news-card glass-card"
-               >
-                 <span className="news-date">{new Date(item.published_at).toLocaleDateString()}</span>
-                 <h3>{item.title}</h3>
-                 <p>{item.content}</p>
-                 {item.author && <span className="news-author">By {item.author}</span>}
-               </motion.div>
-             ))
-          ) : (
-             <p className="no-results">No recent updates.</p>
-          )}
         </div>
       </section>
 
@@ -453,9 +397,7 @@ const JobsPage = () => {
              <p style={{fontWeight:600, color:'var(--primary)', marginBottom:'4px'}}>{job.company}</p>
              <p style={{fontSize:'0.9rem', marginBottom:'16px'}}>{job.location} {job.salary_range ? ` • ${job.salary_range}` : ''}</p>
              <div className="result-links" style={{display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center'}}>
-               {job.application_link && (
-                 <a href={job.application_link.startsWith('http') ? job.application_link : `https://${job.application_link}`} target="_blank" rel="noreferrer" className="btn-primary" style={{padding: '6px 16px', fontSize: '0.9rem'}}>Apply Now</a>
-               )}
+               <Link to={`/jobs/${job.id}`} className="btn-primary" style={{padding: '6px 16px', fontSize: '0.9rem'}}>View Job</Link>
                <button className="btn-secondary" style={{padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', border: 'none', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
                  if(navigator.share) navigator.share({title: job.title, url: window.location.href});
                  else alert(`Share this link: ${window.location.href}`);
@@ -480,7 +422,12 @@ const EventsPage = () => {
         const res = await fetch('https://my-app.lama-4db.workers.dev/api/events');
         if (res.ok) {
           const data = await res.json();
-          const sorted = data.docs.sort((a,b) => (b.is_sponsored ? 1 : 0) - (a.is_sponsored ? 1 : 0));
+          const now = new Date();
+          const activeEvents = data.docs.filter(evt => {
+            const expireDate = evt.end_date ? new Date(evt.end_date) : new Date(evt.date);
+            return expireDate >= now;
+          });
+          const sorted = activeEvents.sort((a,b) => (b.is_sponsored ? 1 : 0) - (a.is_sponsored ? 1 : 0));
           setEvents(sorted);
         }
       } catch (e) {
@@ -507,9 +454,7 @@ const EventsPage = () => {
              <h3>{evt.title}</h3>
              <p style={{fontWeight:500, color:'var(--text-muted)', marginBottom:'16px'}}>{evt.location}</p>
              <div className="result-links" style={{display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center'}}>
-               {evt.registration_link && (
-                 <a href={evt.registration_link.startsWith('http') ? evt.registration_link : `https://${evt.registration_link}`} target="_blank" rel="noreferrer" className="btn-secondary" style={{padding: '6px 16px', fontSize: '0.9rem'}}>Register</a>
-               )}
+               <Link to={`/events/${evt.id}`} className="btn-secondary" style={{padding: '6px 16px', fontSize: '0.9rem'}}>View Event</Link>
                <button className="btn-secondary" style={{padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', border: 'none', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => {
                  if(navigator.share) navigator.share({title: evt.title, url: window.location.href});
                  else alert(`Share this link: ${window.location.href}`);
@@ -775,89 +720,45 @@ const DirectoryPage = () => {
         </div>
       </div>
       
-      <div className="quick-categories">
-        {categories.map(cat => (
-          <div 
-            key={cat.id} 
-            className={`category-card ${category === cat.id.toString() ? 'active' : ''}`}
-            onClick={() => setCategory(category === cat.id.toString() ? '' : cat.id.toString())}
-          >
-            <div className="category-card-icon">{cat.icon}</div>
-            <span>{cat.name}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="directory-results">
+      <div className="directory-results" style={{marginTop: '32px'}}>
         {loading ? (
-          <div className="loading">Loading results...</div>
+           <div className="loading">Loading results...</div>
         ) : results.length > 0 ? (
-          <div className="results-grid">
-            {results.map(result => (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                key={result.id} 
-                className={`result-card glass-card ${result.is_sponsored ? 'sponsored-card' : ''}`}
-              >
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <div className="result-type-badge">
-                    {result.type === 'business' ? <Building2 size={16} /> : <Users size={16} />}
-                    <span>{result.type}</span>
-                  </div>
-                  {result.is_sponsored && <span style={{fontSize:'0.75rem', background:'var(--accent)', color:'white', padding:'4px 10px', borderRadius:'12px', fontWeight:600, letterSpacing: '0.5px'}}>FEATURED</span>}
-                </div>
-                <h3>{result.name}</h3>
-                {result.category_name && <span className="category-tag">{result.category_name}</span>}
-                <p>{result.description}</p>
-                
-                {/* Contact Info Directly Visible */}
-                <div style={{marginTop: 'auto', marginBottom: '16px', fontSize: '0.9rem'}}>
-                  {result.phone && <p style={{color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px'}}><Phone size={14}/> {result.phone}</p>}
-                  {result.email && <p style={{color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px'}}><Mail size={14}/> <a href={`mailto:${result.email}`} className="email-link">{result.email}</a></p>}
-                </div>
-
-                <div className="result-links" style={{display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center'}}>
-                  {result.website && <a href={`https://${result.website.replace('https://', '')}`} target="_blank" rel="noreferrer" className="website-link">Visit Website</a>}
-                  {result.is_sponsored && (
-                     <button className="btn-secondary" style={{padding: '4px 12px', fontSize: '0.85rem'}} onClick={() => setActiveFormId(result.id)}>Contact Ad</button>
-                  )}
-                  <button className="btn-secondary" style={{padding: '4px 12px', fontSize: '0.85rem', marginLeft: 'auto', border: 'none', display: 'flex', alignItems: 'center', gap: '4px'}} onClick={() => handleShare(result)}>
-                    <Share2 size={14}/> Share
-                  </button>
-                  <button className="btn-secondary" style={{padding: '4px 8px', fontSize: '0.85rem', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', color: result.isSaved ? 'var(--accent)' : 'inherit'}} onClick={() => handleSaveToNetwork(result.id, result.isSaved)} title="Save to Network">
-                    <Bookmark size={16} fill={result.isSaved ? 'currentColor' : 'none'} />
-                  </button>
-                </div>
-
-                {/* Lead Form */}
-                <AnimatePresence>
-                  {activeFormId === result.id && (
-                    <motion.form 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="lead-form"
-                      onSubmit={(e) => handleLeadSubmit(e, result.id)}
-                    >
-                      <input type="text" placeholder="Your Name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                      <input type="email" placeholder="Your Email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                      <textarea placeholder="Message..." required value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})}></textarea>
-                      <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                        <button type="submit" className="btn-primary" style={{padding: '6px 16px'}}>Send</button>
-                        <button type="button" onClick={() => setActiveFormId(null)} style={{background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)'}}>Cancel</button>
-                        {formStatus && <span style={{fontSize: '0.85rem', color: 'var(--primary)'}}>{formStatus}</span>}
-                      </div>
-                    </motion.form>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </div>
+           <div className="craigslist-directory" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '32px' }}>
+             {Object.entries(results.reduce((acc, result) => {
+                const cat = result.category_name || 'Other';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(result);
+                return acc;
+             }, {})).map(([categoryName, items]) => (
+               <div key={categoryName} className="craigslist-category-block">
+                 <h3 style={{ borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {categories.find(c => c.name === categoryName)?.icon || <MapPin size={18}/>} 
+                    {categoryName} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400}}>({items.length})</span>
+                 </h3>
+                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                   {items.map(item => (
+                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.95rem', borderBottom: '1px dashed #eee', paddingBottom: '8px' }}>
+                       <Link to={`/directory/${item.id}`} style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: item.is_sponsored ? 600 : 400, flex: 1 }}>
+                         {item.is_sponsored && <Sparkles size={14} color="var(--accent)" style={{marginRight: '6px', verticalAlign: 'middle'}} />}
+                         <span style={{verticalAlign: 'middle'}} className="hover-underline">{item.name}</span>
+                       </Link>
+                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', minWidth: '80px', justifyContent: 'flex-end' }}>
+                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{item.phone || item.location || 'NYC'}</span>
+                         <button style={{background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: item.isSaved ? 'var(--accent)' : 'var(--border)'}} onClick={() => handleSaveToNetwork(item.id, item.isSaved)} title="Save to Network">
+                           <Bookmark size={16} fill={item.isSaved ? 'currentColor' : 'none'} />
+                         </button>
+                       </div>
+                     </li>
+                   ))}
+                 </ul>
+               </div>
+             ))}
+           </div>
         ) : (
-          <div className="no-results">
-            <p>No results found for your search.</p>
-          </div>
+           <div className="no-results">
+             <p>No results found for your search.</p>
+           </div>
         )}
       </div>
 
@@ -1004,6 +905,264 @@ const NetworkPage = () => {
   )
 }
 
+// --- Detail Pages --- //
+const DirectoryDetailPage = () => {
+  const { id } = useParams();
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formStatus, setFormStatus] = useState('');
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const res = await fetch(`https://my-app.lama-4db.workers.dev/api/listings/${id}`);
+        if(res.ok) {
+          const data = await res.json();
+          setListing(data);
+        }
+      } catch (err) { console.error(err); }
+      setLoading(false);
+    };
+    fetchListing();
+  }, [id]);
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    setFormStatus('Sending...');
+    try {
+      const web3Data = new FormData();
+      web3Data.append("access_key", "4309e9db-e44a-423b-9e1f-19b6a5f666a3");
+      web3Data.append("name", formData.name);
+      web3Data.append("email", formData.email);
+      web3Data.append("message", `Lead for listing ID: ${id}\n\n${formData.message}`);
+      
+      const web3Res = await fetch("https://api.web3forms.com/submit", { method: "POST", body: web3Data });
+      const web3Result = await web3Res.json();
+      
+      await fetch('https://my-app.lama-4db.workers.dev/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listing: id, name: formData.name, email: formData.email, message: formData.message, source: 'directory_detail_page' })
+      });
+
+      if (web3Result.success) {
+        setFormStatus('Sent successfully!');
+        setTimeout(() => { setFormStatus(''); setFormData({name:'', email:'', message:''}); }, 2000);
+      } else { setFormStatus('Error sending.'); }
+    } catch { setFormStatus('Error sending.'); }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: listing.name, text: `Check out ${listing.name}!`, url: window.location.href }).catch(console.error);
+    } else { alert(`Share this link: ${window.location.href}`); }
+  };
+
+  if (loading) return <div className="page" style={{padding: '100px', textAlign: 'center'}}>Loading...</div>;
+  if (!listing) return <div className="page" style={{padding: '100px', textAlign: 'center'}}>Listing not found.</div>;
+
+  return (
+    <div className="page directory">
+      <div className="directory-header" style={{textAlign: 'left', marginBottom: '40px'}}>
+        <Link to="/directory" style={{color: 'var(--text-muted)', display: 'inline-block', marginBottom: '16px'}}>&larr; Back to Directory</Link>
+        <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+          <h1 style={{margin: 0}}>{listing.name}</h1>
+          {listing.is_sponsored && <span style={{fontSize:'0.75rem', background:'var(--accent)', color:'white', padding:'4px 10px', borderRadius:'12px', fontWeight:600}}>FEATURED</span>}
+        </div>
+        {typeof listing.category === 'object' && listing.category?.name && <span className="category-tag" style={{marginTop: '12px', display: 'inline-block'}}>{listing.category.name}</span>}
+      </div>
+
+      <div className="glass-card" style={{padding: '40px'}}>
+        <div style={{display: 'flex', flexWrap: 'wrap', gap: '40px'}}>
+          <div style={{flex: '2 1 400px'}}>
+            <h2>About</h2>
+            <p style={{fontSize: '1.1rem', lineHeight: '1.8'}}>{listing.description}</p>
+            
+            <div style={{marginTop: '32px'}}>
+              <h3>Contact Information</h3>
+              <ul style={{listStyle: 'none', padding: 0, marginTop: '16px'}}>
+                {listing.phone && <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><Phone size={18} color="var(--primary)"/> <strong>Phone:</strong> {listing.phone}</li>}
+                {listing.email && <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><Mail size={18} color="var(--primary)"/> <strong>Email:</strong> <a href={`mailto:${listing.email}`}>{listing.email}</a></li>}
+                {listing.website && <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><Building2 size={18} color="var(--primary)"/> <strong>Website:</strong> <a href={`https://${listing.website.replace('https://', '')}`} target="_blank" rel="noreferrer">{listing.website}</a></li>}
+                {listing.location && <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><MapPin size={18} color="var(--primary)"/> <strong>Location:</strong> {listing.location}</li>}
+              </ul>
+            </div>
+          </div>
+          
+          <div style={{flex: '1 1 300px'}}>
+            <div style={{background: 'rgba(255,255,255,0.05)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)'}}>
+              <h3 style={{marginBottom: '16px'}}>Actions</h3>
+              <button className="btn-secondary" style={{width: '100%', marginBottom: '12px', display: 'flex', justifyContent: 'center', gap: '8px'}} onClick={handleShare}>
+                <Share2 size={18}/> Share This
+              </button>
+              
+              {listing.is_sponsored && (
+                <div style={{marginTop: '32px'}}>
+                  <h3 style={{marginBottom: '16px', fontSize: '1.2rem', color: 'var(--accent)'}}>Contact Business Directly</h3>
+                  <form onSubmit={handleLeadSubmit} style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                    <input type="text" placeholder="Your Name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{padding:'12px', borderRadius:'8px', border:'1px solid var(--border)', background:'transparent', color:'var(--text)'}} />
+                    <input type="email" placeholder="Your Email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} style={{padding:'12px', borderRadius:'8px', border:'1px solid var(--border)', background:'transparent', color:'var(--text)'}} />
+                    <textarea placeholder="How can they help you?" required value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} style={{padding:'12px', borderRadius:'8px', border:'1px solid var(--border)', background:'transparent', color:'var(--text)', minHeight: '100px'}}></textarea>
+                    <button type="submit" className="btn-primary" style={{padding: '12px'}}>Send Message</button>
+                    {formStatus && <span style={{fontSize: '0.9rem', color: 'var(--accent)', textAlign: 'center'}}>{formStatus}</span>}
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const JobsDetailPage = () => {
+  const { id } = useParams();
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`https://my-app.lama-4db.workers.dev/api/jobs/${id}`)
+      .then(r => r.json())
+      .then(setJob)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) return <div className="page" style={{padding: '100px', textAlign: 'center'}}>Loading...</div>;
+  if (!job) return <div className="page" style={{padding: '100px', textAlign: 'center'}}>Job not found.</div>;
+
+  return (
+    <div className="page">
+      <div className="directory-header" style={{textAlign: 'left', marginBottom: '40px'}}>
+        <Link to="/jobs" style={{color: 'var(--text-muted)', display: 'inline-block', marginBottom: '16px'}}>&larr; Back to Jobs</Link>
+        <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+          <h1 style={{margin: 0}}>{job.title}</h1>
+          {job.is_sponsored && <span style={{fontSize:'0.75rem', background:'var(--accent)', color:'white', padding:'4px 10px', borderRadius:'12px', fontWeight:600}}>FEATURED</span>}
+        </div>
+        <p style={{fontSize: '1.2rem', color: 'var(--primary)', marginTop: '8px', fontWeight: 500}}>{job.company}</p>
+      </div>
+
+      <div className="glass-card" style={{padding: '40px'}}>
+        <div style={{display: 'flex', flexWrap: 'wrap', gap: '40px'}}>
+          <div style={{flex: '2 1 400px'}}>
+            <h2>Job Description</h2>
+            <div style={{marginTop: '16px', lineHeight: '1.8'}}>{typeof job.description === 'string' ? processRichText(job.description) : 'See application link for details.'}</div>
+            
+            {job.requirements && (
+               <div style={{marginTop: '32px'}}>
+                 <h3>Requirements</h3>
+                 <div>{processRichText(job.requirements)}</div>
+               </div>
+            )}
+            
+            {job.benefits && (
+               <div style={{marginTop: '32px'}}>
+                 <h3>Benefits</h3>
+                 <div>{processRichText(job.benefits)}</div>
+               </div>
+            )}
+          </div>
+          
+          <div style={{flex: '1 1 300px'}}>
+            <div style={{background: 'rgba(255,255,255,0.05)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)'}}>
+              <h3 style={{marginBottom: '16px'}}>Job Details</h3>
+              <ul style={{listStyle: 'none', padding: 0, margin: '0 0 24px 0'}}>
+                <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><Briefcase size={18} color="var(--primary)"/> <strong>Type:</strong> {job.type?.replace('_', ' ')}</li>
+                <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><MapPin size={18} color="var(--primary)"/> <strong>Location:</strong> {job.location}</li>
+                {job.salary_range && <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><Banknote size={18} color="var(--primary)"/> <strong>Salary:</strong> {job.salary_range}</li>}
+              </ul>
+              
+              <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                {job.application_link && (
+                  <a href={job.application_link.startsWith('http') ? job.application_link : `https://${job.application_link}`} target="_blank" rel="noreferrer" className="btn-primary" style={{textAlign: 'center', padding: '12px'}}>Apply Now</a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EventsDetailPage = () => {
+  const { id } = useParams();
+  const [eventObj, setEventObj] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`https://my-app.lama-4db.workers.dev/api/events/${id}`)
+      .then(r => r.json())
+      .then(setEventObj)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) return <div className="page" style={{padding: '100px', textAlign: 'center'}}>Loading...</div>;
+  if (!eventObj) return <div className="page" style={{padding: '100px', textAlign: 'center'}}>Event not found.</div>;
+
+  return (
+    <div className="page">
+      <div className="directory-header" style={{textAlign: 'left', marginBottom: '40px'}}>
+        <Link to="/events" style={{color: 'var(--text-muted)', display: 'inline-block', marginBottom: '16px'}}>&larr; Back to Events</Link>
+        <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+          <h1 style={{margin: 0}}>{eventObj.title}</h1>
+          {eventObj.is_sponsored && <span style={{fontSize:'0.75rem', background:'var(--accent)', color:'white', padding:'4px 10px', borderRadius:'12px', fontWeight:600}}>FEATURED</span>}
+          {eventObj.is_private && <span style={{fontSize:'0.75rem', border:'1px solid var(--border)', color:'var(--text)', padding:'4px 10px', borderRadius:'12px', fontWeight:600}}>PRIVATE</span>}
+        </div>
+        <p style={{fontSize: '1.2rem', color: 'var(--primary)', marginTop: '8px', fontWeight: 500}}>
+          {new Date(eventObj.date).toLocaleDateString(undefined, {weekday: 'short', month: 'long', day: 'numeric', hour: 'numeric', minute:'2-digit'})}
+        </p>
+      </div>
+
+      <div className="glass-card" style={{padding: '40px'}}>
+        <div style={{display: 'flex', flexWrap: 'wrap', gap: '40px'}}>
+          <div style={{flex: '2 1 400px'}}>
+            <h2>About The Event</h2>
+            <div style={{marginTop: '16px', lineHeight: '1.8'}}>{typeof eventObj.description === 'string' ? processRichText(eventObj.description) : 'See registration link for details.'}</div>
+            
+            {eventObj.directions && (
+               <div style={{marginTop: '32px'}}>
+                 <h3>Directions</h3>
+                 <p style={{lineHeight: '1.8', whiteSpace: 'pre-wrap'}}>{eventObj.directions}</p>
+               </div>
+            )}
+          </div>
+          
+          <div style={{flex: '1 1 300px'}}>
+            <div style={{background: 'rgba(255,255,255,0.05)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border)'}}>
+              <h3 style={{marginBottom: '16px'}}>Details</h3>
+              <ul style={{listStyle: 'none', padding: 0, margin: '0 0 24px 0'}}>
+                <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><MapPin size={18} color="var(--primary)"/> <strong>Location:</strong> {eventObj.location}</li>
+                {eventObj.organizer && <li style={{marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}><Users size={18} color="var(--primary)"/> <strong>Organizer:</strong> {eventObj.organizer}</li>}
+              </ul>
+              
+              <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                {eventObj.registration_link && (
+                  <a href={eventObj.registration_link.startsWith('http') ? eventObj.registration_link : `https://${eventObj.registration_link}`} target="_blank" rel="noreferrer" className="btn-primary" style={{textAlign: 'center', padding: '12px'}}>RSVP / Register</a>
+                )}
+                {eventObj.location_url && (
+                  <a href={eventObj.location_url} target="_blank" rel="noreferrer" className="btn-secondary" style={{textAlign: 'center', padding: '12px'}}>Get Directions Map</a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Functions --- //
+const processRichText = (data) => {
+  if (!data) return null;
+  if (typeof data === 'string') return <p>{data}</p>;
+  if (data.html) return <div dangerouslySetInnerHTML={{__html: data.html}} />;
+  return <p>Rich content available on platform.</p>;
+};
+
 // --- App Root --- //
 
 function App() {
@@ -1030,8 +1189,11 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/directory" element={<DirectoryPage />} />
+            <Route path="/directory/:id" element={<DirectoryDetailPage />} />
             <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/jobs/:id" element={<JobsDetailPage />} />
             <Route path="/events" element={<EventsPage />} />
+            <Route path="/events/:id" element={<EventsDetailPage />} />
             <Route path="/network" element={<NetworkPage />} />
           </Routes>
         </main>
