@@ -1,6 +1,7 @@
 name = "gsandu-worker"
 main = "worker/index.js"
 compatibility_date = "2024-03-01"
+assets = { directory = "./dist", binding = "ASSETS" }
 
 # We will add D1 database configuration here later
 [[d1_databases]]

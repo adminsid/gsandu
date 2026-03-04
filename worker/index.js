@@ -5,8 +5,6 @@ const app = new Hono()
 
 app.use('/*', cors())
 
-app.get('/', (c) => c.text('GS&U Management API - Exceeding your networking needs.'))
-
 app.get('/api/health', (c) => c.json({ status: 'ok', message: 'API is running' }))
 
 // Advanced Directory endpoint with AI Semantic Search
@@ -150,6 +148,11 @@ app.post('/api/leads', async (c) => {
   } catch (e) {
     return c.json({ error: e.message }, 500)
   }
+})
+
+// SPA Fallback for React Router (must be the last route)
+app.get('*', async (c) => {
+  return await c.env.ASSETS.fetch(new Request(new URL('/', c.req.url), c.req))
 })
 
 export default app
