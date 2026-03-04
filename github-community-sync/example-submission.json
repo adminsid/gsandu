@@ -1,0 +1,8 @@
+{
+  "name": "Example Community Service",
+  "description": "An example of a service submitted by a community member via Github PR.",
+  "type": "business",
+  "email": "hello@example.com",
+  "phone": "212-555-0199",
+  "website": "https://example.com"
+}

@@ -1,0 +1,16 @@
+name = "gsandu-worker"
+main = "worker/index.js"
+compatibility_date = "2024-03-01"
+
+# We will add D1 database configuration here later
+[[d1_databases]]
+binding = "DB"
+database_name = "gsandu-directory"
+database_id = "c391a2eb-d603-43a0-ad99-91f8f4dbe540"
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "gsandu-directory-idx"
+
+[ai]
+binding = "AI"
